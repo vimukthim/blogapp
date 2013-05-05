@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}	
+	<h3>
+      {{post.subject}}  
+    </h3>
+	<small > {{post.created.strftime("%b %d, %Y")}}</small>
+   	<br>
+	<p>
+	{{post.content}}
+	</p>
+  
+
+{% endblock %}
