@@ -25,7 +25,7 @@ from google.appengine.api import users
 from google.appengine.ext import webapp
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = False)
+jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
 
 def render_str(template, **params):
 	t = jinja_env.get_template(template)
@@ -50,23 +50,31 @@ class NewPost(MainHandler):
 
 	def get(self):
 		user = users.get_current_user()
+		
 	
 		if user:
-			self.render("newpost.html")
+			user_name = users.get_current_user().nickname()
+			user_id = users.get_current_user().user_id()
+			posts = db.GqlQuery("select * from Post where user_id = :1 order by created desc", user_id)
+
+			self.render("newpost.html", user_name = user_name, posts = posts)
 		else:
 			self.redirect("/login")
 
 	def post(self):
 		user = users.get_current_user()
-	
+		user_id = users.get_current_user().user_id()
+		user_name = users.get_current_user().nickname()
+
 		if not user:
 			self.redirect("/login")
 		else:
 			subject = self.request.get('subject')
 			content = self.request.get('content')
 
+
 		if subject and content:
-			p = Post(subject = subject, content = content)
+			p = Post(subject = subject, content = content, user_id = user_id, user_name = user_name)
 			p.put()
 			#self.redirect('/')
 			post_key = p.put()
@@ -74,7 +82,7 @@ class NewPost(MainHandler):
 		
 		else:
 			error = "subject and content please"
-			self.render("newpost.html", subject=subject, content= content, error= error)
+			self.render("newpost.html", subject=subject, content= content, error= error,  user_name = user_name)
 
 
 
@@ -84,7 +92,8 @@ class Post(db.Model): #create database object for a post
 	subject = db.StringProperty(required = True)
 	content = db.TextProperty(required = True)
 	created = db.DateTimeProperty(auto_now_add = True)
-
+	user_id = db.StringProperty(required = True)
+	user_name = db.StringProperty(required = True)
 
 
 
@@ -106,7 +115,18 @@ class Front(MainHandler):
 		posts = db.GqlQuery("select * from Post order by created desc limit 10")
 		self.render("front.html", posts = posts)
 
+class Admin(MainHandler):
 
+	def get(self):
+		user = users.get_current_user()
+
+		if user:
+			user_id = users.get_current_user().user_id()
+			user_name = users.get_current_user().nickname()
+			posts = db.GqlQuery("select * from Post where user_id = :1 order by created desc", user_id)
+			self.render("admin.html", posts = posts, user_name = user_name)
+		else:
+			self.redirect("/login")
 
 class Login(MainHandler):
 	def get(self):
@@ -114,17 +134,16 @@ class Login(MainHandler):
 		if user:
 			greeting = ("Welcome, %s! (<a href=\"%s\">sign out</a>)" % (user.nickname(), users.create_logout_url("/")))
 		else:
-			greeting = ("<a href=\"%s\">Sign in or register</a>." % users.create_login_url("/newpost"))
+			greeting = ("<a href=\"%s\">Sign in or register</a>." % users.create_login_url("/"))
 
 		self.write("<html><body>%s</body></html>" % greeting)
 
 
 		
 app = webapp2.WSGIApplication([
-    						('/', Front),
-							('/newpost', NewPost),
-							
-							#('/archive', Archive),
-							('/login', Login),
-							('/([0-9]+)', PostPage),
-							], debug=True)
+    				('/', Front),
+				('/newpost', NewPost),
+				('/admin', Admin),
+				('/login', Login),
+				('/([0-9]+)', PostPage),
+				], debug=True)
