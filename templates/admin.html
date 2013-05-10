@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1><small>Welcome {{user_name}} </small></h1> 
+<br>
+  {% for p in posts %}
+	
+	<h3>
+      {{p.subject}}  
+    </h3>
+	<small > {{p.created.strftime("%b %d, %Y")}}</small>
+   	<br>
+	<p>
+	{{p.content}}
+	</p>
+  
+
+	{% endfor %}
+
+
+
+{% endblock %}
