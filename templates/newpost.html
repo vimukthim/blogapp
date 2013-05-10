@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
+{{user_name|e}}
+<div class="left">
 <h4>New Post</h4>
 <hr>
     <form method="post">
@@ -17,5 +19,12 @@
 
       <input type="submit" class="btn btn-primary">
     </form>
+</div>
+<div class="right">
+{% block posts%}
+{% include 'posts.html' %}
+{% endblock%}
+
+</div>
 
 {% endblock %}
