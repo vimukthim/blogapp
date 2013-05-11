@@ -5,14 +5,17 @@
   {% for p in posts %}
 	
 	<h3>
-      {{p.subject}}  
-    </h3>
-	<small > {{p.created.strftime("%b %d, %Y")}}</small>
+      		{{p.subject}}  
+    	</h3>
+	<small > 
+		{{p.created.strftime("%b %d, %Y")}}
+	</small>
    	<br>
 	<p>
-	{{p.content}}
+		{{p.content}}
 	</p>
-  
+  	<p><a href="/edit/{{p.key().id()}}"> Edit Post</a></p>
+  	<p><a href="/delete/{{p.key().id()}}"> Delete Post</a></p>
 
 	{% endfor %}
 
