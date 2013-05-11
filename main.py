@@ -57,6 +57,8 @@ class NewPost(MainHandler):
 			user_id = users.get_current_user().user_id()
 			posts = db.GqlQuery("select * from Post where user_id = :1 order by created desc", user_id)
 
+
+
 			self.render("newpost.html", user_name = user_name, posts = posts)
 		else:
 			self.redirect("/login")
@@ -84,8 +86,47 @@ class NewPost(MainHandler):
 			error = "subject and content please"
 			self.render("newpost.html", subject=subject, content= content, error= error,  user_name = user_name)
 
+class EditPost(MainHandler):
 
+	def get(self,post_id):
+		user = users.get_current_user()
+		if not user:
+			self.redirect("/login")
+		else:
+			key = db.Key.from_path('Post', int(post_id))
+			post = db.get(key)
+			self.render("newpost.html",subject=post.subject, content= post.content)
 
+	def post(self,post_id):
+		user_id = users.get_current_user().user_id()
+		user_name = users.get_current_user().nickname()
+
+		subject = self.request.get('subject')
+		content = self.request.get('content')
+		
+		if subject and content:
+			key = db.Key.from_path('Post', int(post_id))
+			post = db.get(key)
+
+			post = Post(subject = subject, content = content, user_id = user_id, user_name = user_name)
+			post.put()
+			post_id = post.put()
+			#self.redirect('/')
+			self.redirect("/%s" %post_id.id())#use regular exfor handler and use subject as url 
+		
+		else:
+			error = "subject and content please"
+			self.render("newpost.html", subject=subject, content= content, error= error,  user_name = user_name)
+class DeletePost(MainHandler):
+
+	def get(self,post_id):
+		#user = users.get_current_user()
+		if not users.is_current_user_admin():
+			self.redirect("/login")
+		else:
+			key = db.Key.from_path('Post', int(post_id))
+			db.delete(key)
+			self.redirect("/" )
 
 class Post(db.Model): #create database object for a post
 
@@ -141,9 +182,11 @@ class Login(MainHandler):
 
 		
 app = webapp2.WSGIApplication([
-    				('/', Front),
-				('/newpost', NewPost),
-				('/admin', Admin),
-				('/login', Login),
-				('/([0-9]+)', PostPage),
-				], debug=True)
+    						('/', Front),
+							('/newpost', NewPost),
+							('/edit/([0-9]+)', EditPost),
+							('/delete/([0-9]+)', DeletePost),
+							('/admin', Admin),
+							('/login', Login),
+							('/([0-9]+)', PostPage),
+							], debug=True)
